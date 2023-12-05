@@ -83,5 +83,32 @@ class TestSymNet(unittest.TestCase):
         self.assertTrue(jnp.max(jnp.abs(psiS)) < 1e-12)
 
 
+class TestVisionTransformer(unittest.TestCase):
+    def test_vit_2d(self):
+        net = nets.ViT(image_size=8,
+                       patch_size=4,
+                       dim=128,
+                       depth=3,
+                       heads=3,
+                       mlp_dim=64,
+                       num_classes=1)
+        params = net.init(random.PRNGKey(0), jnp.zeros((1, 8, 8, 1), dtype=np.int32))
+
+        key = jax.random.PRNGKey(0)
+
+        img = jax.random.normal(key, (1, 8, 8, 1))
+        # init_rngs = {'params': jax.random.PRNGKey(1),
+        #              'dropout': jax.random.PRNGKey(2),
+        #              'emb_dropout': jax.random.PRNGKey(3)}
+
+        #params = net.init(random.PRNGKey(0), img)
+        #psiS = net.apply(params, img)
+        psi = jVMC.vqs.NQS(net)
+        #psiS = psi(img[None,...][None,...])
+        n_params_flax = sum(
+            jax.tree_leaves(jax.tree_map(lambda x: np.prod(x.shape), params))
+        )
+        print(f"Number of parameters in Flax model: {n_params_flax}")
+
 if __name__ == "__main__":
     unittest.main()
